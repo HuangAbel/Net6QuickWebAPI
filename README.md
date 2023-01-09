@@ -1,4 +1,5 @@
-# Net6QuickWebAPI WebAPI基本配置
+# Net6QuickWebAPI 
+# WebAPI基本配置
 ## 使用
 1. SQLServer
 2. Dapper
