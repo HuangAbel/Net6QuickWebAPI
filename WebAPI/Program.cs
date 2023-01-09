@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using Models;
 using System.Reflection;
 using System.Runtime.Loader;
@@ -47,6 +49,8 @@ builder.Services.AddAuthentication(opt =>
 });
 //jwthelp
 builder.Services.AddSingleton<JwtHelper>();
+//Add ValidateCodeHelper
+builder.Services.AddSingleton<ValidateCodeHelper>();
 //log4net
 builder.Logging.AddProvider(new Log4netProvider("log4net.xml"));
 
@@ -58,11 +62,34 @@ builder.Services.AddCors(
             policy
              .WithOrigins("https://localhost:4200", "https://localhost")
                    .WithMethods("POST", "GET")
-                   .AllowAnyHeader()
+                   .WithHeaders(
+                        HeaderNames.ContentType,
+                        HeaderNames.Accept,
+                        HeaderNames.AccessControlMaxAge,
+                        HeaderNames.AccessControlAllowOrigin,
+                        HeaderNames.AccessControlAllowMethods,
+                        HeaderNames.AccessControlAllowCredentials,
+                        HeaderNames.Referer,
+                        HeaderNames.UserAgent,
+                        HeaderNames.Authorization)
                    .AllowCredentials();
         });
-    }
-    );
+    });
+//Add Cache
+builder.Services.AddDistributedMemoryCache();
+//Add Session
+builder.Services.AddSession(opt =>
+{
+    //opt.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+    opt.IdleTimeout = TimeSpan.FromMinutes(10);
+    opt.Cookie.HttpOnly = true;
+});
+builder.Services.Configure<FormOptions>(o =>
+{
+    o.ValueLengthLimit = int.MaxValue;
+    o.MultipartBodyLengthLimit = int.MaxValue;
+    o.MemoryBufferThreshold = int.MaxValue;
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -71,10 +98,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "WebAPI v1"));
 }
-app.UseCors("CorsPolicy");
+app.UseCookiePolicy();
+app.UseSession();
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCors("CorsPolicy");
 app.UseMiddleware<JwtMiddleware>();
 app.UseResponseCaching();
 app.MapControllers();
