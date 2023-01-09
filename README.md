@@ -1,4 +1,3 @@
-# Net6QuickWebAPI 
 # WebAPI基本配置
 ## 使用
 1. SQLServer
