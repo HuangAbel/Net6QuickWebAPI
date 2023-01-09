@@ -9,3 +9,4 @@
 3. Swagger
 4. AutoMapper
 5. Service & Repository 注入
+6. 圖形驗證碼
